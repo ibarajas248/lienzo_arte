@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.*
+firebase-service-account.json
+canvas_state.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
