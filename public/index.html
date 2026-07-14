@@ -1,40 +1,198 @@
-<!DOCTYPE colhtml>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Lienzo Colaborativo Premium</title>
     <meta name="description" content="Un lienzo de dibujo en tiempo real, elegante y fluido.">
     <!-- Google Fonts para tipografía premium -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=admin-tracing-1">
 </head>
 <body>
     
     <!-- Pantalla de Login Overlay -->
-    <div class="login-overlay" id="login-overlay">
+    <div class="login-overlay hidden" id="login-overlay">
         <div class="login-card">
             <h2>Lienzo Colaborativo</h2>
             <p>Inicia sesión para empezar a dibujar</p>
+            <p id="login-status" class="login-status" role="status"></p>
             <button id="google-login-btn" class="google-btn">
                 <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
                 Iniciar sesión con Google
             </button>
+            <button id="guest-login-btn" class="guest-btn" type="button">Continuar sin sesion</button>
         </div>
     </div>
 
     <!-- Lienzo -->
-    <canvas id="drawing-canvas"></canvas>
+    <main class="canvas-scroll">
+        <canvas id="drawing-canvas" class="is-panning-mode"></canvas>
+    </main>
 
-    <!-- UI Overlay (Glassmorphism) -->
-    <div class="toolbar" id="toolbar">
-        <h1 class="app-title">Lienzo Colaborativo</h1>
+    <!-- UI Overlay -->
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="toolbar" aria-expanded="false" title="Abrir herramientas">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+    </button>
+
+    <div class="floating-tools" aria-label="Herramientas rapidas">
+        <button id="undo-floating-btn" class="floating-tool" type="button" title="Deshacer" aria-label="Deshacer ultimo trazo" disabled>
+            <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7v6h6"></path>
+                <path d="M21 17a9 9 0 0 0-15-6.7L3 13"></path>
+            </svg>
+        </button>
+        <button id="redo-floating-btn" class="floating-tool" type="button" title="Rehacer" aria-label="Rehacer ultimo trazo" disabled>
+            <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 7v6h-6"></path>
+                <path d="M3 17a9 9 0 0 1 15-6.7L21 13"></path>
+            </svg>
+        </button>
+        <button id="brush-floating-btn" class="floating-tool" type="button" title="Pincel" aria-label="Pincel" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6"></path>
+                <path d="m14 7 3-3a2.1 2.1 0 0 1 3 3l-3 3"></path>
+                <path d="m4 20 5-1 8-8-4-4-8 8-1 5Z"></path>
+            </svg>
+        </button>
+        <button id="hand-floating-btn" class="floating-tool active" type="button" title="Mover sin pintar" aria-label="Mover sin pintar" aria-pressed="true">
+            <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 11.5V10a2 2 0 0 0-4 0v1"></path>
+                <path d="M14 10V8a2 2 0 0 0-4 0v4"></path>
+                <path d="M10 12V9a2 2 0 0 0-4 0v5"></path>
+                <path d="M6 14v-1a2 2 0 0 0-4 0v3c0 4 3 7 8 7h3a7 7 0 0 0 7-7v-4.5a2 2 0 0 0-4 0V13"></path>
+            </svg>
+        </button>
+    </div>
+
+    <section id="canvas-minimap" class="canvas-minimap" aria-label="Navegador del lienzo">
+        <button id="minimap-toggle" class="minimap-toggle" type="button" title="Ocultar navegador" aria-label="Ocultar navegador" aria-expanded="true">
+            <svg viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+                <path d="M9 7h6"></path>
+                <path d="M9 11h6"></path>
+                <path d="M9 15h6"></path>
+            </svg>
+        </button>
+        <div class="minimap-panel">
+            <div class="minimap-header">
+                <span>Navegador</span>
+                <span id="minimap-position">0 px</span>
+            </div>
+            <div id="minimap-scroll" class="minimap-scroll">
+                <canvas id="minimap-canvas" class="minimap-canvas"></canvas>
+                <div id="minimap-track" class="minimap-track"></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="toolbar-backdrop" id="toolbar-backdrop"></div>
+
+    <aside class="toolbar" id="toolbar" aria-hidden="true">
+        <div class="toolbar-header">
+            <h1 class="app-title">Lienzo Colaborativo</h1>
+            <button id="menu-close" class="icon-btn" type="button" title="Cerrar herramientas" aria-label="Cerrar herramientas">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
         
         <div class="tools-container">
+            <div class="tool-group auth-group">
+                <label>Cuenta</label>
+                <div class="auth-user">
+                    <span id="auth-user-text">Invitado</span>
+                </div>
+                <button id="toolbar-login-btn" class="tool-btn" type="button" title="Entrar con Google">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+                    Entrar
+                </button>
+                <button id="toolbar-logout-btn" class="tool-btn" type="button" title="Salir" hidden>Salir</button>
+            </div>
+
+            <div class="tool-group admin-group" id="admin-tools" hidden>
+                <label for="admin-user-select">Admin: colaborador</label>
+                <select id="admin-user-select" class="tool-select">
+                    <option value="">Ver lienzo normal</option>
+                </select>
+                <button id="admin-refresh-btn" class="tool-btn" type="button" title="Actualizar colaboradores">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M3 21v-5h5"></path>
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M16 8h5V3"></path>
+                    </svg>
+                    Actualizar
+                </button>
+                <button id="admin-export-svg-btn" class="tool-btn" type="button" title="Seleccionar area y exportar SVG">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path>
+                        <path d="M14 2v6h6"></path>
+                        <path d="M8 14h8"></path>
+                        <path d="M8 18h5"></path>
+                    </svg>
+                    Exportar SVG
+                </button>
+                <button id="admin-export-jpg-btn" class="tool-btn" type="button" title="Seleccionar area y exportar JPG rapido desde snapshots">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <path d="m21 15-5-5L5 21"></path>
+                    </svg>
+                    JPG rapido
+                </button>
+                <input id="admin-tracing-input" class="hidden-file-input" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/x-png,image/webp">
+                <div class="segmented-tools">
+                    <button id="admin-tracing-toggle-btn" class="tool-btn" type="button" title="Cargar u ocultar imagen de calco">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="m15 3 6 6"></path>
+                            <path d="M21 3 9 15"></path>
+                            <path d="m9 15-2 5 5-2"></path>
+                        </svg>
+                        Calco
+                    </button>
+                    <button id="admin-tracing-move-btn" class="tool-btn" type="button" title="Mover imagen de calco" disabled>
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20"></path>
+                            <path d="M2 12h20"></path>
+                            <path d="m5 9-3 3 3 3"></path>
+                            <path d="m19 9 3 3-3 3"></path>
+                            <path d="m9 5 3-3 3 3"></path>
+                            <path d="m9 19 3 3 3-3"></path>
+                        </svg>
+                        Mover
+                    </button>
+                </div>
+                <button id="admin-tracing-clear-btn" class="tool-btn danger" type="button" title="Quitar imagen de calco" disabled>
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Quitar calco
+                </button>
+                <div id="admin-tracing-controls" class="tracing-controls" hidden>
+                    <label for="admin-tracing-opacity-slider">Opacidad (<span id="admin-tracing-opacity-value">40</span>%)</label>
+                    <input id="admin-tracing-opacity-slider" type="range" min="10" max="90" value="40">
+                    <label for="admin-tracing-scale-slider">Tamano (<span id="admin-tracing-scale-value">100</span>%)</label>
+                    <input id="admin-tracing-scale-slider" type="range" min="20" max="300" value="100">
+                    <p id="admin-tracing-status" class="tool-hint">El calco solo vive en tu navegador.</p>
+                </div>
+                <p id="admin-status" class="tool-hint">Selecciona un usuario para resaltar sus aportes.</p>
+                <p id="admin-export-status" class="tool-hint" hidden></p>
+            </div>
+
             <div class="tool-group">
                 <label for="color-picker">Color</label>
                 <div class="color-wrapper">
-                    <input type="color" id="color-picker" value="#00ffcc">
+                    <input type="color" id="color-picker" value="#000000">
                 </div>
             </div>
 
@@ -44,13 +202,147 @@
             </div>
 
             <div class="tool-group">
+                <button id="brush-btn" class="tool-btn" type="button" title="Pincel">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6"></path>
+                        <path d="m14 7 3-3a2.1 2.1 0 0 1 3 3l-3 3"></path>
+                        <path d="m4 20 5-1 8-8-4-4-8 8-1 5Z"></path>
+                    </svg>
+                    Pincel
+                </button>
+                <button id="pressure-brush-btn" class="tool-btn" type="button" title="Pincel de presion para tableta/lapiz">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 19 5 21l2-7 9.5-9.5a2.1 2.1 0 0 1 3 3Z"></path>
+                        <path d="m14 6 4 4"></path>
+                        <path d="M4 4c3 1 5 1 8 0"></path>
+                    </svg>
+                    Presion
+                </button>
+                <p id="pressure-brush-status" class="tool-hint">Solo lapiz/tableta con presion.</p>
+                <button id="text-tool-btn" class="tool-btn" type="button" title="Agregar texto al lienzo">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 7V4h16v3"></path>
+                        <path d="M9 20h6"></path>
+                        <path d="M12 4v16"></path>
+                    </svg>
+                    Texto
+                </button>
+                <div id="text-controls" class="text-controls" hidden>
+                    <label for="text-input">Texto</label>
+                    <textarea id="text-input" class="tool-textarea" rows="3" maxlength="240" placeholder="Texto"></textarea>
+                    <label for="text-size-slider">Tamano texto (<span id="text-size-value">36</span>px)</label>
+                    <input type="range" id="text-size-slider" min="12" max="160" value="36">
+                    <p id="text-status" class="tool-hint">Texto vacio.</p>
+                </div>
                 <button id="eraser-btn" class="tool-btn" title="Borrador">
                     <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline><polyline points="7.5 19.79 7.5 14.6 3 12"></polyline><polyline points="21 12 16.5 14.6 16.5 19.79"></polyline><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                     Borrador
                 </button>
+                <button id="paint-bucket-btn" class="tool-btn" type="button" title="Bote de pintura">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 14 8-8 7 7-8 8Z"></path>
+                        <path d="m11 6-2-2"></path>
+                        <path d="M16 16h.01"></path>
+                        <path d="M21 20a3 3 0 0 1-6 0c0-1.5 3-5 3-5s3 3.5 3 5Z"></path>
+                    </svg>
+                    Rellenar
+                </button>
+                <button id="eyedropper-btn" class="tool-btn" type="button" title="Cuentagotas">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m2 22 1-4 11.5-11.5"></path>
+                        <path d="m14 6 4 4"></path>
+                        <path d="m13 7 2-2a2.8 2.8 0 0 1 4 0 2.8 2.8 0 0 1 0 4l-2 2"></path>
+                        <path d="m7 17 4 4"></path>
+                    </svg>
+                    Cuentagotas
+                </button>
             </div>
 
             <div class="tool-group">
+                <button id="image-upload-btn" class="tool-btn" type="button" title="Anadir imagen vectorizada">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <path d="m21 15-5-5L5 21"></path>
+                    </svg>
+                    Imagen
+                </button>
+                <input id="image-input" class="hidden-file-input" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/x-png,image/webp">
+                <p id="image-status" class="tool-hint">JPG, PNG con transparencia o WebP a bloques de color.</p>
+                <div id="image-size-controls" class="image-size-controls" hidden>
+                    <label for="image-size-slider">Tamaño imagen (<span id="image-size-value">100</span>%)</label>
+                    <input type="range" id="image-size-slider" min="20" max="240" value="100">
+                    <div class="segmented-tools">
+                        <button id="image-smaller-btn" class="icon-btn" type="button" title="Reducir imagen" aria-label="Reducir imagen">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        <button id="image-larger-btn" class="icon-btn" type="button" title="Aumentar imagen" aria-label="Aumentar imagen">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-group">
+                <button id="pan-btn" class="tool-btn active" title="Mover lienzo">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20"></path>
+                        <path d="M2 12h20"></path>
+                        <path d="m5 9-3 3 3 3"></path>
+                        <path d="m19 9 3 3-3 3"></path>
+                        <path d="m9 5 3-3 3 3"></path>
+                        <path d="m9 19 3 3 3-3"></path>
+                    </svg>
+                    Mover
+                </button>
+            </div>
+
+            <div class="tool-group">
+                <label>Zoom (<span id="zoom-value">100%</span>)</label>
+                <div class="segmented-tools">
+                    <button id="zoom-out-btn" class="icon-btn" type="button" title="Alejar" aria-label="Alejar">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <button id="reset-view-btn" class="icon-btn" type="button" title="Centrar vista" aria-label="Centrar vista">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 2v3"></path>
+                            <path d="M12 19v3"></path>
+                            <path d="M2 12h3"></path>
+                            <path d="M19 12h3"></path>
+                        </svg>
+                    </button>
+                    <button id="zoom-in-btn" class="icon-btn" type="button" title="Acercar" aria-label="Acercar">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tool-group">
+                <button id="undo-btn" class="tool-btn" type="button" title="Deshacer ultimo trazo" disabled>
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7v6h6"></path>
+                        <path d="M21 17a9 9 0 0 0-15-6.7L3 13"></path>
+                    </svg>
+                    Deshacer
+                </button>
+                <button id="redo-btn" class="tool-btn" type="button" title="Rehacer ultimo trazo" disabled>
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 7v6h-6"></path>
+                        <path d="M3 17a9 9 0 0 1 15-6.7L21 13"></path>
+                    </svg>
+                    Rehacer
+                </button>
                 <button id="clear-btn" class="tool-btn danger" title="Limpiar Lienzo">
                     <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
@@ -61,10 +353,13 @@
             <span id="connection-status" class="status-dot connected"></span>
             <span id="status-text">Conectado</span>
         </div>
-    </div>
+        <div class="status-indicator">
+            <span id="tile-text">Tile 0, 0</span>
+        </div>
+    </aside>
 
     <!-- Script de Socket.io provisto por el backend -->
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=text-wrap-1"></script>
 </body>
 </html>

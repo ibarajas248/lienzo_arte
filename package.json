@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
+    "load-test:socket": "node scripts/load-test-socket.js",
+    "snapshots:generate": "node scripts/generate-tile-snapshots.js",
+    "minimap:generate": "node scripts/generate-minimap-snapshot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,6 +18,10 @@
     "express": "^5.2.1",
     "firebase-admin": "^14.1.0",
     "mongoose": "^9.7.3",
+    "sharp": "^0.35.3",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
   }
 }
